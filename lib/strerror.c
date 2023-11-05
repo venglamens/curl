@@ -556,6 +556,9 @@ curl_url_strerror(CURLUcode error)
   case CURLUE_LACKS_IDN:
     return "libcurl lacks IDN support";
 
+  case CURLUE_TOO_LARGE:
+    return "A value or data field is larger than allowed";
+
   case CURLUE_LAST:
     break;
   }
