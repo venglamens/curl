@@ -263,6 +263,7 @@ static CURLcode concat_url(char *base, const char *relurl, char **newurl)
   bool host_changed = FALSE;
   const char *useurl = relurl;
   CURLcode result = CURLE_OK;
+  CURLUcode uc;
   *newurl = NULL;
 
   /* protsep points to the start of the host name */
@@ -378,7 +379,10 @@ static CURLcode concat_url(char *base, const char *relurl, char **newurl)
   }
 
   /* then append the new piece on the right side */
-  urlencode_str(&newest, useurl, strlen(useurl), !host_changed, FALSE);
+  uc = urlencode_str(&newest, useurl, strlen(useurl), !host_changed,
+                     FALSE);
+  if(uc)
+    return (uc == CURLUE_TOO_LARGE) ? CURLE_TOO_LARGE : CURLE_OUT_OF_MEMORY;
 
   *newurl = Curl_dyn_ptr(&newest);
   return CURLE_OK;
@@ -1234,10 +1238,9 @@ static CURLUcode parseurl(const char *url, CURLU *u, unsigned int flags)
       if(flags & CURLU_URLENCODE) {
         struct dynbuf enc;
         Curl_dyn_init(&enc, CURL_MAX_INPUT_LENGTH);
-        if(urlencode_str(&enc, fragment + 1, fraglen - 1, TRUE, FALSE)) {
-          result = CURLUE_OUT_OF_MEMORY;
+        result = urlencode_str(&enc, fragment + 1, fraglen - 1, TRUE, FALSE);
+        if(result)
           goto fail;
-        }
         u->fragment = Curl_dyn_ptr(&enc);
       }
       else {
@@ -1263,10 +1266,9 @@ static CURLUcode parseurl(const char *url, CURLU *u, unsigned int flags)
         struct dynbuf enc;
         Curl_dyn_init(&enc, CURL_MAX_INPUT_LENGTH);
         /* skip the leading question mark */
-        if(urlencode_str(&enc, query + 1, qlen - 1, TRUE, TRUE)) {
-          result = CURLUE_OUT_OF_MEMORY;
+        result = urlencode_str(&enc, query + 1, qlen - 1, TRUE, TRUE);
+        if(result)
           goto fail;
-        }
         u->query = Curl_dyn_ptr(&enc);
       }
       else {
@@ -1290,10 +1292,9 @@ static CURLUcode parseurl(const char *url, CURLU *u, unsigned int flags)
   if(pathlen && (flags & CURLU_URLENCODE)) {
     struct dynbuf enc;
     Curl_dyn_init(&enc, CURL_MAX_INPUT_LENGTH);
-    if(urlencode_str(&enc, path, pathlen, TRUE, FALSE)) {
-      result = CURLUE_OUT_OF_MEMORY;
+    result = urlencode_str(&enc, path, pathlen, TRUE, FALSE);
+    if(result)
       goto fail;
-    }
     pathlen = Curl_dyn_len(&enc);
     path = u->path = Curl_dyn_ptr(&enc);
   }
@@ -1629,10 +1630,11 @@ CURLUcode curl_url_get(const CURLU *u, CURLUPart what,
     }
     if(urlencode) {
       struct dynbuf enc;
+      CURLUcode uc;
       Curl_dyn_init(&enc, CURL_MAX_INPUT_LENGTH);
-      if(urlencode_str(&enc, *part, partlen, TRUE,
-                       what == CURLUPART_QUERY))
-        return CURLUE_OUT_OF_MEMORY;
+      uc = urlencode_str(&enc, *part, partlen, TRUE, what == CURLUPART_QUERY);
+      if(uc)
+        return uc;
       free(*part);
       *part = Curl_dyn_ptr(&enc);
     }
