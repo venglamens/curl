@@ -187,7 +187,8 @@ u27: Bad scheme
 u28: Unsupported number of slashes following scheme
 u29: Bad user
 u30: libcurl lacks IDN support
-u31: CURLUcode unknown
+u31: A value or data field is larger than allowed
+u32: CURLUcode unknown
 </stdout>
 </verify>
 
