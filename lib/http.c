@@ -4633,7 +4633,7 @@ CURLcode Curl_http_req_make(struct httpreq **preq,
 
   DEBUGASSERT(method);
   if(m_len + 1 >= sizeof(req->method))
-    return CURLE_BAD_FUNCTION_ARGUMENT;
+    return CURLE_TOO_LARGE;
 
   req = calloc(1, sizeof(*req));
   if(!req)
@@ -4789,7 +4789,7 @@ CURLcode Curl_http_req_make2(struct httpreq **preq,
 
   DEBUGASSERT(method);
   if(m_len + 1 >= sizeof(req->method))
-    return CURLE_BAD_FUNCTION_ARGUMENT;
+    return CURLE_TOO_LARGE;
 
   req = calloc(1, sizeof(*req));
   if(!req)
